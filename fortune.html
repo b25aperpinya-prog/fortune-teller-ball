@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fortune Ball</title>
+    <style>
+        :root {
+            --ball: #1a1a1a;
+            --tri: #2f46c9;
+            --face: #ffffff;
+            --facetext: #000000;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            font-family: Georgia, "Times New Roman", serif;
+            color: #eee;
+            background: radial-gradient(circle at 50% 30%, #3a2a5c, #120c22 70%);
+        }
+        h1 { margin: 0; letter-spacing: 3px; font-weight: normal; }
+
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        #namehere {
+            padding: 10px 14px;
+            font-size: 16px;
+            border-radius: 20px;
+            border: 2px solid #6b5aa0;
+            background: #1d1533;
+            color: #fff;
+            outline: none;
+        }
+        #namehere:focus { border-color: #b9a5ff; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(#7b5cd6, #4c32a3);
+            box-shadow: 0 3px 8px rgba(0,0,0,.5);
+        }
+        button:disabled { opacity: .6; cursor: wait; }
+        .ball {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 32% 25%, color-mix(in srgb, var(--ball) 60%, white) 0%, var(--ball) 35%, color-mix(in srgb, var(--ball) 30%, black) 100%);
+            box-shadow: 0 25px 40px rgba(0,0,0,.7), inset -10px -15px 30px rgba(0,0,0,.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ball.shake { animation: shake .6s ease-in-out 3; }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) rotate(0); }
+            20% { transform: translate(-14px, 6px) rotate(-6deg); }
+            40% { transform: translate(14px, -6px) rotate(6deg); }
+            60% { transform: translate(-10px, -4px) rotate(-4deg); }
+            80% { transform: translate(10px, 4px) rotate(4deg); }
+        }
+        .eight {
+            position: absolute;
+            width: 130px; height: 130px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--face) 85%, white), color-mix(in srgb, var(--face) 80%, black));
+            display: flex; align-items: center; justify-content: center;
+            font: bold 90px Georgia, serif;
+            color: var(--facetext);
+            transition: opacity .5s;
+        }
+        .window {
+            position: absolute;
+            width: 150px; height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, #1b2a6b, #070d2e);
+            border: 4px solid #111;
+            box-shadow: inset 0 0 18px #000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0;
+            transition: opacity .8s;
+        }
+        .triangle {
+            width: 0; height: 0;
+            position: absolute;
+            border-left: 62px solid transparent;
+            border-right: 62px solid transparent;
+            border-top: 108px solid var(--tri);
+            top: 18px;
+            filter: drop-shadow(0 0 6px #5b76ff);
+        }
+        #answer {
+            position: relative;
+            z-index: 1;
+            width: 80px;
+            margin-top: -34px;
+            text-align: center;
+            font-size: 9px;
+            line-height: 1.2;
+            color: #e6ecff;
+            text-shadow: 0 0 4px #000;
+        }
+        .ball.revealed .eight { opacity: 0; }
+        .ball.revealed .window { opacity: 1; }
+
+        .sticker {
+            position: absolute;
+            bottom: 28px; right: 44px;
+            font-size: 38px;
+            transform: rotate(14deg);
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,.6));
+            pointer-events: none;
+        }
+        details.design {
+            background: rgba(255,255,255,.08);
+            border: 1px solid #6b5aa0;
+            border-radius: 14px;
+            padding: 10px 16px;
+            max-width: 380px;
+            width: 100%;
+        }
+        details.design summary { cursor: pointer; text-align: center; }
+        .design-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px 14px;
+            align-items: center;
+            margin-top: 12px;
+        }
+        .design-grid input[type=color] { width: 48px; height: 30px; border: none; background: none; cursor: pointer; }
+        .design-grid input[type=text], .design-grid select {
+            width: 90px; padding: 4px 8px; border-radius: 8px;
+            border: 1px solid #6b5aa0; background: #1d1533; color: #fff; font-size: 16px;
+        }
+        #resetDesign { grid-column: 1 / -1; font-size: 14px; padding: 6px 14px; }
+        #result {
+            min-height: 60px;
+            max-width: 420px;
+            text-align: center;
+            font-size: 20px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fortune Ball</h1>
+
+    <div class="controls">
+        <input type="text" id="namehere" placeholder="Enter your name">
+        <button id="askBtn" onclick="fortune()">Tell me my fortune</button>
+    </div>
+
+    <div class="ball" id="ball">
+        <div class="eight" id="faceText">8</div>
+        <div class="sticker" id="sticker"></div>
+        <div class="window">
+            <div class="triangle"></div>
+            <div id="answer"></div>
+        </div>
+    </div>
+
+    <details class="design">
+        <summary>Design your ball</summary>
+        <div class="design-grid">
+            <label for="ballColor">Ball color</label>
+            <input type="color" id="ballColor" value="#1a1a1a">
+            <label for="faceColor">Circle color</label>
+            <input type="color" id="faceColor" value="#ffffff">
+            <label for="faceTextColor">Number color</label>
+            <input type="color" id="faceTextColor" value="#000000">
+            <label for="triColor">Triangle color</label>
+            <input type="color" id="triColor" value="#2f46c9">
+            <label for="faceInput">Circle text</label>
+            <input type="text" id="faceInput" value="8" maxlength="2">
+            <label for="stickerSelect">Sticker</label>
+            <select id="stickerSelect">
+                <option value="">None</option>
+                <option>⭐</option><option>❤️</option><option>🔥</option>
+                <option>🌙</option><option>⚡</option><option>🌸</option>
+            </select>
+        </div>
+    </details>
+
+    <p id="result">Type your name and shake the ball, find your fortune.</p>
+
+    <script src="buttons.js"></script>
+</body>
+</html>
